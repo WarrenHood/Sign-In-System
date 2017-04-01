@@ -1,0 +1,20 @@
+body{
+	background:grey;
+}
+
+#heading td{
+	background:green;
+	border:1px solid black;
+	text-align:center;
+	height:10%;
+	width:33%;
+}
+#manage td{
+	border:1px solid black;
+	text-align:center;
+	height:10%;
+	width:33%;
+}
+#in{
+	hover:pointer;
+}
