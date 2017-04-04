@@ -69,7 +69,13 @@ function say(m){
 	box.innerHTML = "<br>"+m+'<br><button id="ok">Ok</button><br>';
 	document.getElementById('ok').onclick = function(){
 		document.getElementById("pops").innerHTML = "";};
-	
+	document.getElementById('hid').focus();
+	document.getElementById('hid').onkeydown = function(e){
+		if(e.keyCode == 13){
+			document.getElementById('hid').blur();
+			document.getElementById("pops").innerHTML = "";
+		}
+	}
 }
 function setHandlers(){
 	xin.onclick = signIn;
