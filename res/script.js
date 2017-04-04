@@ -10,6 +10,67 @@ window.onload = function(){
 	setHandlers();
 	loadData();
 }
+function passprom(m,f){
+	document.getElementById("pops").innerHTML = '<div id="ps"><input type="password" id="pw" size=25/><button id="ok">Ok</button></div>';
+	var box = document.getElementById("ps");
+	//box.style.height = window.innerHeight/2+"px";
+	box.style.width = window.innerWidth +"px";
+	box.style.background = "white";
+	box.style.color = "black";
+	box.style.border = "2px solid blue";
+	box.style.left = "0px";
+	box.style.top = window.innerHeight/4+"px";
+	box.innerHTML = "<br>"+m+'<input type="password" id="pw" size=25/><button id="ok">Ok</button><br>';
+	document.getElementById("pw").focus();
+	document.getElementById("pw").onkeydown = function(e){
+		e = e || event;
+		if(e.keyCode == 13){
+		var pass = document.getElementById("pw").value;
+		document.getElementById("pops").innerHTML = "";
+		f(pass);}};
+	document.getElementById('ok').onclick = function(){
+		var pass = document.getElementById("pw").value;
+		document.getElementById("pops").innerHTML = "";
+		f(pass);};
+}
+function prom(m,f){
+	document.getElementById("pops").innerHTML = '<div id="ps"><input id="pw" size=25/><button id="ok">Ok</button></div>';
+	var box = document.getElementById("ps");
+	//box.style.height = window.innerHeight/2+"px";
+	box.style.width = window.innerWidth +"px";
+	box.style.background = "white";
+	box.style.color = "black";
+	box.style.border = "2px solid blue";
+	box.style.left = "0px";
+	box.style.top = window.innerHeight/4+"px";
+	box.innerHTML = "<br>"+m+'<input id="pw" size=25/><button id="ok">Ok</button><br>';
+	document.getElementById("pw").focus();
+	document.getElementById("pw").onkeydown = function(e){
+		e = e || event;
+		if(e.keyCode == 13){
+		var pass = document.getElementById("pw").value;
+		document.getElementById("pops").innerHTML = "";
+		f(pass);}};
+	document.getElementById('ok').onclick = function(){
+		var pass = document.getElementById("pw").value;
+		document.getElementById("pops").innerHTML = "";
+		f(pass);};
+}
+function say(m){
+	document.getElementById("pops").innerHTML = '<div id="ps"><button id="ok">Ok</button></div>';
+	var box = document.getElementById("ps");
+	//box.style.height = window.innerHeight/2+"px";
+	box.style.width = window.innerWidth +"px";
+	box.style.background = "white";
+	box.style.color = "black";
+	box.style.border = "2px solid blue";
+	box.style.left = "0px";
+	box.style.top = window.innerHeight/4+"px";
+	box.innerHTML = "<br>"+m+'<br><button id="ok">Ok</button><br>';
+	document.getElementById('ok').onclick = function(){
+		document.getElementById("pops").innerHTML = "";};
+	
+}
 function setHandlers(){
 	xin.onclick = signIn;
 	xout.onclick = signOut;
@@ -20,11 +81,16 @@ function manage(){
 		managing = false;
 		usersSignedIn();
 		return;
+	}prom("Please enter an administrator username:",
+	function(username){
+	if(!getFirstName(username)){
+		say(username+ " is not registered");
+		return;
 	}
-	var username = prompt("Please enter an administrator username:");
+	passprom("Hi "+getFirstName(username)+"! Please enter your password:",function(pass){
 	if(!isAdministrator(username)){
-		if(!username || getPassword(username) != prompt("Hi "+getFirstName(username)+"! Please enter your password:")){
-		alert("Username or password incorrect!");
+		if(!getFirstName(username) || getPassword(username) != pass){
+		say("Username or password incorrect!");
 		return;
 		}
 		managing = true;
@@ -44,18 +110,21 @@ function manage(){
 		document.getElementById('manage').innerHTML = elt;
 		return;
 	}
-	if(getPassword(username) != prompt("Hi "+getFirstName(username)+"! Please enter your password:")){
-		alert("Incorrect Password!");
+	if(getPassword(username) != pass){
+		say("Incorrect Password!");
 		return;
 	}
 	var sty = ' style="text-align:center;background:orange;border:1px solid black;height:'+window.innerHeight/20+'px;width:'+window.innerWidth/3+'px;"';
 	document.getElementById("manage").innerHTML = "<h1> Data Management </h1><table id='manageT'><tr><td onclick='meritList()'"+sty+'>Get merit sheet</td><td onclick="userStats()"'+sty+'>View user stats</td><td onclick="userEdit()"'+sty+">Manage users</td></tr><tr></tr><td onclick='backup()'"+sty+">Backup Data</td><td onclick='restore()'"+sty+">Restore Data</td><td onclick='wipe()'"+sty+">Wipe Data</td></table><div id='output'></div>";
 	managing = true;
-	alert("You may view and edit merits and monitor data from here.");
+	say("You may view and edit merits and monitor data from here.");});});
 }
 function meritList(){
 	var elt = '<table><tr><td>Admin Number</td><td>Merits</td></tr>';
-	for(var i = 0; i < users.length;i++)elt += "<tr><td>"+users[i].admin+"</td><td>"+Math.ceil(Math.floor(users[i].logs.length/2)/2)+"</td><tr>";
+	for(var i = 0; i < users.length;i++){
+		var count = 0;
+		for(var j=1;j<users[i].logs.length;j+=2)if(users[i].logs[j][1].getHours() == 15)count++;
+		elt += "<tr><td>"+users[i].admin+"</td><td>"+Math.ceil(Math.floor(users[i].logs.length/2 +count)/2)+"</td><tr>";}
 	elt += "</table>";
 	document.getElementById('output').innerHTML = elt;
 }
@@ -92,9 +161,9 @@ function Res(){
 	loadData();
 	}
 	catch(e){
-		alert(e);
+		say(e);
 	}
-	alert("Data restore complete!");
+	say("Data restore complete!");
 }
 function wipe(){
 	if(!confirm("Are you sure you want to wipe all your data?"))return;
@@ -103,9 +172,9 @@ function wipe(){
 	loadData();
 	}
 	catch(e){
-		alert(e);
+		say(e);
 	}
-	alert("Data wipe complete!");
+	say("Data wipe complete!");
 }
 function usersSignedIn(){
 	var elt = '<h1>Currently on Duty</h1><br><table><tr><td>Admin Number</td><td>First Name</td><td>Second Name</td><td>Time since sign in(minutes)</td></tr>';
@@ -129,7 +198,7 @@ function del(){
 	for(var i = 0; i<users.length;i++)if(users[i].admin != username)nUserList.push(users[i]);
 	users = nUserList;
 	saveData();
-	alert("Account has been deleted");
+	say("Account has been deleted");
 }
 function create(){
 	var username = document.getElementById('username').value;
@@ -153,7 +222,8 @@ function create(){
 	o.bunked = 0;
 	o.late = 0;
 	users.push(o);
-	alert("Account creation successful");
+	saveData();
+	say("Account creation successful");
 }
 function update(){
 	var username = document.getElementById('username').value;
@@ -170,48 +240,59 @@ function update(){
 			users[i].pass = pass || users[i].pass;
 			users[i].changePass = changePass || users[i].changePass;
 			users[i].administrator = administrator;
-			alert("Account has been updated.");
+			say("Account has been updated.");
+			saveData();
 			return;
 			}
 	}
 }
 function signIn(){
-	var admin = prompt("Enter admin number:");
+	prom("Enter admin number:",function(admin){
 	var fname = getFirstName(admin);
+	var index = -1;
 	if(fname){
 		for(var i=0;i<users.length;i++){
-			if(users[i].admin == admin){
-				if(users[i].changePass){
-					var newpass = prompt("Please enter a new password:");
-					if(prompt("Please confirm your new password:"))users[i].pass = newpass;
-					else{
-						alert("Passwords do not match. Please try again.");
-						return;
-					}
-					users[i].changePass = false;
-					saveData();
-					alert("Password has been changed");
+			if(users[i].admin == admin){index = i;break;
 				}
-				
 			}
 		}
-		if(prompt("Hi "+getFirstName(admin)+". Please enter your password:") == getPassword(admin)){
-			var logar = [];
+		if(index == -1){say(admin + " is not registered");return;}
+		if(users[index].changePass)passprom("Please enter a new password:",function(newpass){
+				passprom("Please confirm password",function(con){
+					if(newpass == con)users[index].pass = newpass;
+					else{
+						say("Passwords do not match. Please try again.");
+						return;
+					}
+					users[index].changePass = false;
+					saveData();
+					say("Password has been changed");
+					var logar = [];
+					logar.push("in");
+					logar.push(getCurrentDate());
+					if(hasSignedOut(admin))log(admin,logar);
+					});});
+		else {
+		var logar = [];
 			logar.push("in");
 			logar.push(getCurrentDate());
 			var lastIn = getLastSignIn(admin);
 			var lastOut = getLastSignOut(admin);
 			var currentTime = new Date();
 				if(!hasSignedOut(admin)){
-					alert("You are already signed in!");
+					say("You are already signed in!");
 					return;
 				}
-				if(lastIn && currentTime.getTime() - lastIn.getTime() < 1000*60*60){
-					alert("You have already signed in within the last hour!");
+				if(currentTime.getHours() != 15 && lastIn && currentTime.getTime() - lastIn.getTime() < 1000*60*60){
+					say("You have already signed in within the last hour!");
 					return;
 				}
-				if(currentTime.getHours() == 2 && 60 - currentTime.getMinutes() <= 15 ){
-					alert("You are late! No merits for this duty will be given!");
+				if(currentTime.getHours() == 15 && lastIn && lastIn.getHours() == 3){
+					say("You have already signed in within the last hour!");
+					return;
+				}
+				if(currentTime.getHours() == 14 && 60 - currentTime.getMinutes() <= 15 ){
+					say("You are late! No merits for this duty will be given!");
 					for(var i = 0;i<users.length;i++){
 						if(users[i].admin == admin){
 							users[i].late++;
@@ -221,44 +302,33 @@ function signIn(){
 					return;
 					
 				}
+		passprom("Hi "+getFirstName(admin)+". Please enter your password:",
+		function(pass){
+		if(pass == getPassword(admin)){
 			log(admin,logar);
-			alert("Enjoy your duty, "+getFirstName(admin));
-		}
-		else alert("Incorrect Password!");
+			say("Enjoy your duty, "+getFirstName(admin));
+		}else say("Incorrect Password!");
+	});
 	}
-	else alert("Admin Number: "+admin+" is not registered.");
+	});
 }
 function signOut(){
-	var admin = prompt("Enter admin number:");
+	prom("Enter admin number:",function(admin){
 	var fname = getFirstName(admin);
 	if(fname){
-		if(prompt("Hi "+getFirstName(admin)+". Please enter your password:") == getPassword(admin)){
-			var logar = [];
+		var logar = [];
 			logar.push("out");
 			logar.push(getCurrentDate());
 			var lastIn = getLastSignIn(admin);
 			var lastOut = getLastSignOut(admin);
 			var currentTime = new Date();
 				if(hasSignedOut(admin)){
-					alert("You are not signed in!");
+					say("You are not signed in!");
 					return;
 				}
-				if(lastIn && currentTime.getTime() - lastIn.getTime() <= 1000*60*7 ){
-					var intime = (currentTime.getTime() - lastIn.getTime())/(1000*60);
-					if(intime >= 0.5)alert("You have only been signed in for "+ Math.round(intime) +' minute(s)! No merits for this duty.');
-					else alert("You have only been signed in for "+ Math.round(intime*60) +' seconds! No merits for this duty.');
-					for(var i = 0;i<users.length;i++){
-						if(users[i].admin == admin){
-							users[i].late++;
-							break;
-						}
-					}
-					cancelLastIn(admin);
-					return;
-				}
-				if(lastIn && currentTime.getTime() - lastIn.getTime() >= 1000*60*60*2 ){
+				if(lastIn && currentTime.getTime() - lastIn.getTime() >= 1000*60*60*1.5 ){
 					var intime = (currentTime.getTime() - lastIn.getTime())/(1000*60*60);
-					alert("You have been signed in for "+ Math.round(intime) +' hours! No merits for this duty. You were probably bunking.');
+					say("You have been signed in for "+ Math.round(intime) +' hours! No merits for this duty. You were probably bunking.');
 					for(var i = 0;i<users.length;i++){
 						if(users[i].admin == admin){
 							users[i].bunked++;
@@ -268,12 +338,29 @@ function signOut(){
 					cancelLastIn(admin);
 					return;
 				}
+		passprom("Hi "+getFirstName(admin)+". Please enter your password:",
+		function(pass){
+		if(pass == getPassword(admin)){
+			if(lastIn && currentTime.getTime() - lastIn.getTime() <= 1000*60*7 ){
+					var intime = (currentTime.getTime() - lastIn.getTime())/(1000*60);
+					if(intime >= 0.5)say("You have only been signed in for "+ Math.round(intime) +' minute(s)! No merits for this duty.');
+					else say("You have only been signed in for "+ Math.round(intime*60) +' seconds! No merits for this duty.');
+					for(var i = 0;i<users.length;i++){
+						if(users[i].admin == admin){
+							users[i].late++;
+							break;
+						}
+					}
+					cancelLastIn(admin);
+					return;
+				}
 			log(admin,logar);
-			alert("Goodbye " + getFirstName(admin));
+			say("Goodbye " + getFirstName(admin));
 		}
-		else alert("Incorrect Password!");
+		else say("Incorrect Password!");});
 	}
-	else alert("Admin Number: "+admin+" is not registered.");
+	
+	else say("Admin Number: "+admin+" is not registered.");});
 }
 function hasSignedOut(admin){
 	for(var i = 0;i<users.length;i++){
@@ -355,7 +442,7 @@ function loadData(){
 		pass:"admin",
 		logs:[],
 		administrator:true,
-		changePass:false,
+		changePass:true,
 		bunked:0,
 		late:0,
 	}
@@ -368,4 +455,5 @@ function loadData(){
 }
 function saveData(){
 	localStorage.SIusers = JSON.stringify(users);
+	return;
 }

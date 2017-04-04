@@ -1,20 +1,43 @@
-body{
-	background:grey;
+#ps{
+  position:absolute;
+  background:grey;
 }
+body{
+	background:black;
+    color:white;
+	}
 
 #heading td{
 	background:green;
-	border:1px solid black;
+	border:1px solid white;
 	text-align:center;
 	height:10%;
 	width:33%;
 }
 #manage td{
-	border:1px solid black;
+	border:1px solid indigo;
 	text-align:center;
 	height:10%;
 	width:33%;
+	background:purple;
+	color:white;
 }
 #in{
 	hover:pointer;
+}
+button{
+  background:purple;
+  color:white;
+  border-bottom-left-radius:20px;
+}
+h1{
+  color:orange;
+  font-family:serif;
+  font-weight:heavy;
+}
+input{
+  border:1px solid red;
+  background:grey;
+  color:white;
+  border-top-right-radius:20px;
 }
