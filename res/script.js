@@ -9,6 +9,11 @@ window.onload = function(){
 	setInterval(function(){if(!managing)usersSignedIn()},1000);
 	setHandlers();
 	loadData();
+	document.getElementById('hid').onclick = function(e){
+		e = e || event;
+		e.preventDefault();
+		
+	}
 }
 function passprom(m,f){
 	document.getElementById("pops").innerHTML = '<div id="ps"><input type="password" id="pw" size=25/><button id="ok">Ok</button></div>';
@@ -66,12 +71,16 @@ function say(m){
 	box.style.border = "2px solid blue";
 	box.style.left = "0px";
 	box.style.top = window.innerHeight/4+"px";
+	document.getElementById('hid').style.top = window.innerHeight/4+"px";
 	box.innerHTML = "<br>"+m+'<br><button id="ok">Ok</button><br>';
 	document.getElementById('ok').onclick = function(){
+		document.getElementById('hid').blur();
+		document.getElementById('hid').style.top = "0px";
 		document.getElementById("pops").innerHTML = "";};
 	document.getElementById('hid').focus();
 	document.getElementById('hid').onkeydown = function(e){
 		if(e.keyCode == 13){
+			document.getElementById('hid').style.top = "0px";
 			document.getElementById('hid').blur();
 			document.getElementById("pops").innerHTML = "";
 		}
@@ -151,7 +160,7 @@ function userStats(){
 }
 function backup(){
 	var elt = '<h1>Copy the below data into a txt file and save it for later use</h1><br>';
-	elt += localStorage.SIusers;
+	elt += json.stringify(users);
 	document.getElementById('output').innerHTML = elt;
 }
 function restore(){
@@ -174,7 +183,8 @@ function Res(){
 function wipe(){
 	if(!confirm("Are you sure you want to wipe all your data?"))return;
 	try{
-	localStorage.SIusers = '';
+	users = [];
+	saveData();
 	loadData();
 	}
 	catch(e){
@@ -442,8 +452,8 @@ function getCurrentDate(){
 }
 function loadData(){
 	var testUser = {
-		firstName:"Warren",
-		secondName:"Hood",
+		firstName:"Admin",
+		secondName:"",
 		admin:"admin",
 		pass:"admin",
 		logs:[],
@@ -452,14 +462,26 @@ function loadData(){
 		bunked:0,
 		late:0,
 	}
-	users = [testUser];
-	if(localStorage.SIusers != null && localStorage.SIusers)users = JSON.parse(localStorage.SIusers);
-	saveData();
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+     users = JSON.parse(this.responseText);
+	 if(!users || users.length == 0)users = [testUser];
+    }
+  };
+  xhttp.open("GET", "data.txt", false);
+  xhttp.send();
 	for(var i =0;i<users.length;i++){
 		for(var j=0;j<users[i].logs.length;j++)users[i].logs[j][1] = new Date(JSON.parse(JSON.stringify(users[i].logs[j][1])));
 	}
 }
 function saveData(){
-	localStorage.SIusers = JSON.stringify(users);
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+    }
+  };
+	xhttp.open("POST", "store.php?q="+JSON.stringify(users), false);
+	xhttp.send();
 	return;
 }
