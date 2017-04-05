@@ -452,14 +452,25 @@ function loadData(){
 		bunked:0,
 		late:0,
 	}
-	users = [testUser];
-	if(localStorage.SIusers != null && localStorage.SIusers)users = JSON.parse(localStorage.SIusers);
-	saveData();
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+     users = JSON.parse(this.responseText);
+    }
+  };
+  xhttp.open("GET", "data.txt", false);
+  xhttp.send();
 	for(var i =0;i<users.length;i++){
 		for(var j=0;j<users[i].logs.length;j++)users[i].logs[j][1] = new Date(JSON.parse(JSON.stringify(users[i].logs[j][1])));
 	}
 }
 function saveData(){
-	localStorage.SIusers = JSON.stringify(users);
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+    }
+  };
+	xhttp.open("POST", "store.php?q="+JSON.stringify(users), false);
+	xhttp.send();
 	return;
 }
