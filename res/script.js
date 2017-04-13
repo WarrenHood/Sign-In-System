@@ -9,11 +9,19 @@ window.onload = function(){
 	setInterval(function(){if(!managing)usersSignedIn()},1000);
 	setHandlers();
 	loadData();
-	document.getElementById('hid').onclick = function(e){
-		e = e || event;
-		e.preventDefault();
-		
-	}
+	hinput =  document.getElementById('hid');
+	hinput.disabled = true;
+	document.onmousemove = handlePointer;
+	document.getElementById('container').style.height = window.innerHeight - 30 + 'px';
+}
+function handlePointer(e){
+	e = e || event;
+	document.getElementById('pointerV').style.left = e.clientX + 1+'px';
+	document.getElementById('pointerH').style.left = e.clientX + 1+'px';
+	document.getElementById('pointerV').style.top = e.clientY + +1+'px';
+	document.getElementById('pointerH').style.top = e.clientY + +1+'px';
+	document.getElementById('pointerT').style.left = e.clientX + 17.5 + 1+'px';
+	document.getElementById('pointerT').style.top = e.clientY + 17.5 + 1+'px';
 }
 function passprom(m,f){
 	document.getElementById("pops").innerHTML = '<div id="ps"><input type="password" id="pw" size=25/><button id="ok">Ok</button></div>';
@@ -70,18 +78,21 @@ function say(m){
 	box.style.color = "black";
 	box.style.border = "2px solid blue";
 	box.style.left = "0px";
+	hinput.disabled = false;
 	box.style.top = window.innerHeight/4+"px";
 	document.getElementById('hid').style.top = window.innerHeight/4+"px";
 	box.innerHTML = "<br>"+m+'<br><button id="ok">Ok</button><br>';
 	document.getElementById('ok').onclick = function(){
 		document.getElementById('hid').blur();
 		document.getElementById('hid').style.top = "0px";
+		hinput.disabled = true;
 		document.getElementById("pops").innerHTML = "";};
 	document.getElementById('hid').focus();
 	document.getElementById('hid').onkeydown = function(e){
 		if(e.keyCode == 13){
 			document.getElementById('hid').style.top = "0px";
 			document.getElementById('hid').blur();
+			hinput.disabled = true;
 			document.getElementById("pops").innerHTML = "";
 		}
 	}
@@ -132,16 +143,35 @@ function manage(){
 	var sty = ' style="text-align:center;background:orange;border:1px solid black;height:'+window.innerHeight/20+'px;width:'+window.innerWidth/3+'px;"';
 	document.getElementById("manage").innerHTML = "<h1> Data Management </h1><table id='manageT'><tr><td onclick='meritList()'"+sty+'>Get merit sheet</td><td onclick="userStats()"'+sty+'>View user stats</td><td onclick="userEdit()"'+sty+">Manage users</td></tr><tr></tr><td onclick='backup()'"+sty+">Backup Data</td><td onclick='restore()'"+sty+">Restore Data</td><td onclick='wipe()'"+sty+">Wipe Data</td></table><div id='output'></div>";
 	managing = true;
+	var lateList = '<h1>Late Sign out times</h1><table><tr><td>Admin Number</td><td>First Name</td><td>Second Name</td><td>Time(Month/Day, Time)</td></tr>';
+	var lateAr = [];
+	for(var i =0;i<users.length;i++){
+		if(!users[i].lateout)continue;
+		for(var j = 0;j < users[i].lateout.length;j++)lateAr.push([users[i].admin,users[i].firstName,users[i].secondName,users[i].lateout[j]]);
+	}
+	lateAr.sort(function(a,b){
+		bd = new Date(b[3]);
+		ad = new Date(a[3]);
+		return bd.getTime() - ad.getTime();
+	});
+	for(el = 0;el<lateAr.length;el++){
+		dat = new Date(lateAr[el][3]);
+		dat = ''+dat.getMonth()+'/' + dat.getDay()+ ', '+ dat.getHours() + ' : ' + dat.getMinutes();
+		lateList += '<tr><td>'+lateAr[el][0]+'</td><td>'+lateAr[el][1]+'</td><td>'+lateAr[el][2]+'</td><td>'+dat +'</td></tr>'
+	};
+	lateList += "</table>";
+	document.getElementById('output').innerHTML = lateList;
 	say("You may view and edit merits and monitor data from here.");});});
 }
 function meritList(){
-	var elt = '<table><tr><td>Admin Number</td><td>Merits</td></tr>';
+	var csv = "";
 	for(var i = 0; i < users.length;i++){
+		if(users[i].administrator)continue;
 		var count = 0;
 		for(var j=1;j<users[i].logs.length;j+=2)if(users[i].logs[j][1].getHours() == 15)count++;
-		elt += "<tr><td>"+users[i].admin+"</td><td>"+Math.ceil(Math.floor(users[i].logs.length/2 +count)/2)+"</td><tr>";}
-	elt += "</table>";
-	document.getElementById('output').innerHTML = elt;
+		csv += users[i].admin + ' , ' + Math.ceil(Math.floor(users[i].logs.length/2 +count)/2) + '\n';
+	}
+	downloadCSV(csv);
 }
 function userStats(){
 	var elt = '<table><tr><td>Admin Number</td><td>First Name</td><td>Second Name</td><td>Times signed in</td><td>Times Bunked</td><td>Times Late</td><td>Total Duty Time(hours)</td><td>Merits</td></tr>';
@@ -160,7 +190,7 @@ function userStats(){
 }
 function backup(){
 	var elt = '<h1>Copy the below data into a txt file and save it for later use</h1><br>';
-	elt += json.stringify(users);
+	elt += JSON.stringify(users);
 	document.getElementById('output').innerHTML = elt;
 }
 function restore(){
@@ -183,7 +213,7 @@ function Res(){
 function wipe(){
 	if(!confirm("Are you sure you want to wipe all your data?"))return;
 	try{
-	users = [];
+	for(var i = 0;i<users.length;i++)users[i].logs = [];
 	saveData();
 	loadData();
 	}
@@ -348,6 +378,8 @@ function signOut(){
 					for(var i = 0;i<users.length;i++){
 						if(users[i].admin == admin){
 							users[i].bunked++;
+							if(!users[i].lateout)users[i].lateout = [];
+							users[i].lateout.push(getCurrentDate());
 							break;
 						}
 					}
@@ -479,9 +511,27 @@ function saveData(){
 	var xhttp = new XMLHttpRequest();
 	xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
+		var x = 3;
     }
   };
 	xhttp.open("POST", "store.php?q="+JSON.stringify(users), false);
 	xhttp.send();
 	return;
 }
+
+
+    function downloadCSV(csv) {
+        var data, filename, link;
+		if (csv == null) return;
+
+        filename = "Merits_" + getCurrentDate() + ".csv";
+
+        if (!csv.match(/^data:text\/csv/i)) {
+            csv = 'data:text/csv;charset=utf-8,' + csv;
+        }
+        data = encodeURI(csv);
+        link = document.createElement('a');
+        link.setAttribute('href', data);
+        link.setAttribute('download', filename);
+        link.click();
+    }
