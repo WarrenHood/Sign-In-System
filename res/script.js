@@ -1,5 +1,108 @@
 users = [];
+mode = 'client';
 managing = false;
+validTimes = [
+	{day:1,
+	Hmin:9,
+	Mmin:50,
+	Mmax:35,
+	HHmax:10
+	},
+	{day:1,
+	Hmin:12,
+	Mmin:35,
+	Mmax:15,
+	Hmax:13
+	},
+	{day:1,
+	Hmin:14,
+	Mmin:25,
+	Hmax:16,
+	Mmax:0
+	},
+	{day:2,
+	Hmin:9,
+	Mmin:45,
+	Mmax:15,
+	Hmax:10
+	},
+	{day:2,
+	Hmin:12,
+	Mmin:15,
+	Mmax:55,
+	Hmax:12
+	},
+	{day:2,
+	Hmin:14,
+	Mmin:25,
+	Hmax:16,
+	Mmax:0
+	},
+	{day:3,
+	Hmin:9,
+	Mmin:50,
+	Mmax:35,
+	HHmax:10
+	},
+	{day:3,
+	Hmin:12,
+	Mmin:35,
+	Mmax:15,
+	Hmax:13
+	},
+	{day:3,
+	Hmin:14,
+	Mmin:25,
+	Hmax:16,
+	Mmax:0
+	},
+	{day:4,
+	Hmin:9,
+	Mmin:45,
+	Mmax:15,
+	Hmax:10
+	},
+	{day:4,
+	Hmin:12,
+	Mmin:15,
+	Mmax:55,
+	Hmax:12
+	},
+	{day:4,
+	Hmin:14,
+	Mmin:25,
+	Hmax:16,
+	Mmax:0
+	},
+	{
+	day:5,
+	Hmin:10,
+	Mmin:45,
+	Mmax:35,
+	Hmax:11
+	}
+	
+];
+function validTime(t){
+	for(var i = 0;i < validTimes.length;i++){
+		if(t.getDay() != validTimes[i].day)continue;
+		var minTime = validTimes[i].Hmin*60 + validTimes[i].Mmin;
+		var maxTime = validTimes[i].Hmax*60 + validTimes[i].Mmax;
+		var currTime = t.getHours()*60 + t.getMinutes();
+		if(currTime <= maxTime && currTime >= minTime)return true;
+	};
+	return false;
+}
+function validTime2(d,h,m){
+	for(var i = 0;i < validTimes.length;i++){
+		if(d != validTimes[i].day)continue;
+		var minTime = validTimes[i].Hmin*60 + validTimes[i].Mmin;
+		var maxTime = validTimes[i].Hmax*60 + validTimes[i].Mmax;
+		var currTime = h*60 + m;
+		if(currTime <= maxTime && currTime >= minTime)return true;
+	};
+	return false;
+}
 window.onload = function(){
 	xin = document.getElementById('in');
 	xout = document.getElementById('out');
@@ -14,6 +117,7 @@ window.onload = function(){
 	document.onmousemove = handlePointer;
 	document.getElementById('container').style.height = window.innerHeight - 30 + 'px';
 }
+
 function handlePointer(e){
 	e = e || event;
 	document.getElementById('pointerV').style.left = e.clientX + 1+'px';
@@ -213,7 +317,12 @@ function Res(){
 function wipe(){
 	if(!confirm("Are you sure you want to wipe all your data?"))return;
 	try{
-	for(var i = 0;i<users.length;i++)users[i].logs = [];
+	for(var i = 0;i<users.length;i++){
+		users[i].logs = [];
+		users[i].lateout = [];
+		users[i].late = 0;
+		users[i].bunked = 0;
+	}
 	saveData();
 	loadData();
 	}
@@ -223,6 +332,7 @@ function wipe(){
 	say("Data wipe complete!");
 }
 function usersSignedIn(){
+	loadData();
 	var elt = '<h1>Currently on Duty</h1><br><table><tr><td>Admin Number</td><td>First Name</td><td>Second Name</td><td>Time since sign in(minutes)</td></tr>';
 	for(var i = 0; i < users.length;i++){
 		if(hasSignedOut(users[i].admin))continue;
@@ -267,6 +377,7 @@ function create(){
 	o.changePass = changePass;
 	o.bunked = 0;
 	o.late = 0;
+	o.lateout = [];
 	users.push(o);
 	saveData();
 	say("Account creation successful");
@@ -293,6 +404,11 @@ function update(){
 	}
 }
 function signIn(){
+	loadData();
+	if(!validTime(getCurrentDate())){
+		say('You may not sign in at this time.');
+		return;
+	}
 	prom("Enter admin number:",function(admin){
 	var fname = getFirstName(admin);
 	var index = -1;
@@ -359,6 +475,11 @@ function signIn(){
 	});
 }
 function signOut(){
+	loadData();
+	if(!validTime(getCurrentDate())){
+		say('You may not sign out at this time.');
+		return;
+	}
 	prom("Enter admin number:",function(admin){
 	var fname = getFirstName(admin);
 	if(fname){
@@ -372,7 +493,7 @@ function signOut(){
 					say("You are not signed in!");
 					return;
 				}
-				if(lastIn && currentTime.getTime() - lastIn.getTime() >= 1000*60*60*1.5 ){
+				if(lastIn && currentTime.getTime() - lastIn.getTime() >= 1000*60*60*1){
 					var intime = (currentTime.getTime() - lastIn.getTime())/(1000*60*60);
 					say("You have been signed in for "+ Math.round(intime) +' hours! No merits for this duty. You were probably bunking.');
 					for(var i = 0;i<users.length;i++){
@@ -494,6 +615,7 @@ function loadData(){
 		bunked:0,
 		late:0,
 	}
+	if(mode == 'server'){
 	var xhttp = new XMLHttpRequest();
 	xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
@@ -503,11 +625,20 @@ function loadData(){
   };
   xhttp.open("GET", "data.txt", false);
   xhttp.send();
+	}
+	else{
+		users = [testUser];
+		if(localStorage.SIusers)users = JSON.parse(localStorage.SIusers);
+	}
 	for(var i =0;i<users.length;i++){
 		for(var j=0;j<users[i].logs.length;j++)users[i].logs[j][1] = new Date(JSON.parse(JSON.stringify(users[i].logs[j][1])));
 	}
 }
 function saveData(){
+	if(mode == 'client'){
+		localStorage.SIusers = JSON.stringify(users);
+		return;
+	}
 	var xhttp = new XMLHttpRequest();
 	xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
