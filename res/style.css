@@ -66,6 +66,14 @@ body{
 	background:purple;
 	color:white;
 }
+td{
+	border:1px solid indigo;
+	text-align:center;
+	height:10%;
+	width:20%;
+	background:purple;
+	color:white;
+}
 #in{
 	hover:pointer;
 }

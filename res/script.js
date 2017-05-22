@@ -150,8 +150,10 @@ function passprom(m,f){
 		document.getElementById("pops").innerHTML = "";
 		f(pass);};
 }
-function prom(m,f){
-	document.getElementById("pops").innerHTML = '<div id="ps"><input id="pw" size=25/><button id="ok">Ok</button></div>';
+function prom(m,f,textA){
+	t = textA || false;
+	if(!t)document.getElementById("pops").innerHTML = '<div id="ps"><input id="pw" size=25/><button id="ok">Ok</button></div>';
+	else document.getElementById("pops").innerHTML = '<div id="ps"><center><textarea id="pw"></textarea><button id="ok">Ok</button></div>';
 	var box = document.getElementById("ps");
 	//box.style.height = window.innerHeight/2+"px";
 	box.style.width = window.innerWidth +"px";
@@ -160,7 +162,13 @@ function prom(m,f){
 	box.style.border = "2px solid blue";
 	box.style.left = "0px";
 	box.style.top = window.innerHeight/4+"px";
-	box.innerHTML = "<br>"+m+'<input id="pw" size=25/><button id="ok">Ok</button><br>';
+	box.innerHTML = "<br>"+m;
+	/* !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!*/
+	if(!t)box.innerHTML += '<input id="pw" size=25/><button id="ok">Ok</button><br>';
+	else{
+		box.innerHTML += '<div id="ps"><center><textarea id="pw"></textarea><\center><button id="ok">Ok</button></div>';
+		document.getElementById('pw').style.width = window.innerWidth + 'px';
+		}
 	document.getElementById("pw").focus();
 	document.getElementById("pw").onkeydown = function(e){
 		e = e || event;
@@ -201,6 +209,14 @@ function say(m){
 		}
 	}
 }
+function deleteLogIN(i,n){
+	newLog = [];
+	for(var j = 0;j<users[i].logs.length;j++){
+		if(j == n || j == n+1)continue;
+		newLog.push(users[i].logs[j]);
+	}
+	users[i].logs = newLog;
+}
 function setHandlers(){
 	xin.onclick = signIn;
 	xout.onclick = signOut;
@@ -234,7 +250,9 @@ function manage(){
 			time = 0;
 			for(var j=1; j< users[i].logs.length;j+=2)time += users[i].logs[j][1].getTime()-users[i].logs[j-1][1].getTime();
 		elt += Math.floor(time/(1000*60*60)) + '</td><td>';
-		elt += Math.ceil(Math.floor(users[i].logs.length/2)/2)+"</td><tr>";
+		var count = 0;
+		for(var j=1;j<users[i].logs.length;j+=2)if(users[i].logs[j][1].getHours() == 15 && users[i].logs[j-1][2])count++;
+		elt += Math.ceil(Math.floor(filter(users[i].logs).length/2) +count/2)+"</td><tr>";
 	}
 		elt += "</table>";
 		document.getElementById('manage').innerHTML = elt;
@@ -265,15 +283,73 @@ function manage(){
 	};
 	lateList += "</table>";
 	document.getElementById('output').innerHTML = lateList;
+	var approvals = "<h1>Awaiting approval</h1><table><tr><td>Admin No</td><td>First Name</td><td>Second Name</td><td>Time Signed in</td><td>Reason</td><td class='approve'>Approve</td><td>Disapprove</td></tr>";
+	//loop here
+	appArray = [];
+	for(var i = 0;i < users.length;i++)for(var j = 0;j<users[i].logs.length;j+=2)if(!users[i].logs[j][2])appArray.push([users[i].admin,users[i].firstName,users[i].secondName,users[i].logs[j][1],users[i].logs[j][3],j]);
+	appArray.sort(function(a,b){
+			bd = new Date(b[3]);
+			ad = new Date(a[3]);
+		return bd.getTime() - ad.getTime();
+	});
+	for(var i = 0;i < appArray.length;i++){
+		for(var j =0;j<users.length;j++)if(users[j].admin == appArray[i][0]){
+			var func = "users["+j+"].logs["+appArray[i][5]+"][2] = true;saveData();refreshApprove();";
+			var delfunc = "deleteLogIN(" +j+","+appArray[i][5]+ ");saveData();refreshApprove();";
+			break;
+		}
+		approvals += "<tr><td>"+ appArray[i][0]+"</td><td>"+appArray[i][1]+"</td><td>"+appArray[i][2]+"</td><td>"+appArray[i][3]+"</td><td>"+appArray[i][4]+"</td><td style='color:green;' onclick='"+func+"'>X</td><td style='color:white;' onclick='"+delfunc+"'>X</td></tr>";
+	}
+	approvals += '</table>';
+	document.getElementById('output').innerHTML += approvals;
 	say("You may view and edit merits and monitor data from here.");});});
+}
+function refreshApprove(){
+	var lateList = '<h1>Late Sign out times</h1><table><tr><td>Admin Number</td><td>First Name</td><td>Second Name</td><td>Time(Month/Day, Time)</td></tr>';
+	var lateAr = [];
+	for(var i =0;i<users.length;i++){
+		if(!users[i].lateout)continue;
+		for(var j = 0;j < users[i].lateout.length;j++)lateAr.push([users[i].admin,users[i].firstName,users[i].secondName,users[i].lateout[j]]);
+	}
+	lateAr.sort(function(a,b){
+		bd = new Date(b[3]);
+		ad = new Date(a[3]);
+		return bd.getTime() - ad.getTime();
+	});
+	for(el = 0;el<lateAr.length;el++){
+		dat = new Date(lateAr[el][3]);
+		dat = ''+dat.getMonth()+'/' + dat.getDay()+ ', '+ dat.getHours() + ' : ' + dat.getMinutes();
+		lateList += '<tr><td>'+lateAr[el][0]+'</td><td>'+lateAr[el][1]+'</td><td>'+lateAr[el][2]+'</td><td>'+dat +'</td></tr>'
+	};
+	lateList += "</table>";
+	document.getElementById('output').innerHTML = lateList;
+	var approvals = "<h1>Awaiting approval</h1><table><tr><td>Admin No</td><td>First Name</td><td>Second Name</td><td>Time Signed in</td><td>Reason</td><td class='approve'>Approve</td></tr>";
+	//loop here
+	appArray = [];
+	for(var i = 0;i < users.length;i++)for(var j = 0;j<users[i].logs.length;j+=2)if(!users[i].logs[j][2])appArray.push([users[i].admin,users[i].firstName,users[i].secondName,users[i].logs[j][1],users[i].logs[j][3],j]);
+	appArray.sort(function(a,b){
+			bd = new Date(b[3]);
+			ad = new Date(a[3]);
+		return bd.getTime() - ad.getTime();
+	});
+	for(var i = 0;i < appArray.length;i++){
+		for(var j =0;j<users.length;j++)if(users[j].admin == appArray[i][0]){
+			var func = "users["+j+"].logs["+appArray[i][5]+"][2] = true;saveData();refreshApprove();";
+			var delfunc = "deleteLogIN(" +j+","+appArray[i][5]+ ");saveData();refreshApprove();";
+			break;
+		}
+		approvals += "<tr><td>"+ appArray[i][0]+"</td><td>"+appArray[i][1]+"</td><td>"+appArray[i][2]+"</td><td>"+appArray[i][3]+"</td><td>"+appArray[i][4]+"</td><td style='color:green;' onclick='"+func+"'>X</td><td style='color:white;' onclick='"+delfunc+"'>X</td></tr>";
+	}
+	approvals += '</table>';
+	document.getElementById('output').innerHTML += approvals;
 }
 function meritList(){
 	var csv = "";
 	for(var i = 0; i < users.length;i++){
 		if(users[i].administrator)continue;
 		var count = 0;
-		for(var j=1;j<users[i].logs.length;j+=2)if(users[i].logs[j][1].getHours() == 15)count++;
-		csv += users[i].admin + ' , ' + Math.ceil(Math.floor(users[i].logs.length/2 +count)/2) + '\n';
+		for(var j=1;j<users[i].logs.length;j+=2)if(users[i].logs[j][1].getHours() == 15 && users[i].logs[j-1][2])count++;
+		csv += users[i].admin + ' , ' + Math.ceil(Math.floor(filter(users[i].logs).length/2) +count/2) + '\n';
 	}
 	downloadCSV(csv);
 }
@@ -287,10 +363,21 @@ function userStats(){
 			time = 0;
 			for(var j=1; j< users[i].logs.length;j+=2)time += users[i].logs[j][1].getTime()-users[i].logs[j-1][1].getTime();
 		elt += Math.floor(time/(1000*60*60)) + '</td><td>';
-		elt += Math.ceil(Math.floor(users[i].logs.length/2)/2)+"</td><tr>";
+		var count = 0;
+		for(var j=1;j<users[i].logs.length;j+=2)if(users[i].logs[j][1].getHours() == 15 && users[i].logs[j-1][2])count++;
+		elt += Math.ceil(Math.floor(filter(users[i].logs).length/2) +count/2)+"</td><tr>";
 	}
 	elt += "</table>";
 	document.getElementById('output').innerHTML = elt;
+}
+function filter(a){
+	var newA = [];
+	for(var i = 0;i<a.length;i+=2){
+		if(!a[i][2])continue;
+		newA.push(a[i]);
+		if(i+1 < a.length)newA.push(a[i+1]);
+	}
+	return newA;
 }
 function backup(){
 	var elt = '<h1>Copy the below data into a txt file and save it for later use</h1><br>';
@@ -404,11 +491,9 @@ function update(){
 	}
 }
 function signIn(){
+	var approved = true;
+	var reason = '';
 	loadData();
-	if(!validTime(getCurrentDate())){
-		say('You may not sign in at this time.');
-		return;
-	}
 	prom("Enter admin number:",function(admin){
 	var fname = getFirstName(admin);
 	var index = -1;
@@ -432,12 +517,16 @@ function signIn(){
 					var logar = [];
 					logar.push("in");
 					logar.push(getCurrentDate());
+					logar.push(true);
+					logar.push("");
 					if(hasSignedOut(admin))log(admin,logar);
 					});});
 		else {
 		var logar = [];
 			logar.push("in");
 			logar.push(getCurrentDate());
+			if(!validTime(getCurrentDate()))approved = false;
+			logar.push(approved);
 			var lastIn = getLastSignIn(admin);
 			var lastOut = getLastSignOut(admin);
 			var currentTime = new Date();
@@ -467,19 +556,22 @@ function signIn(){
 		passprom("Hi "+getFirstName(admin)+". Please enter your password:",
 		function(pass){
 		if(pass == getPassword(admin)){
-			log(admin,logar);
-			say("Enjoy your duty, "+getFirstName(admin));
-		}else say("Incorrect Password!");
+			prom("You are signing in at an unusual time. Please give a reason for this.",function(r){
+				logar.push(r);
+				log(admin,logar);
+				say("Enjoy your duty, "+getFirstName(admin));
+				return;
+			},true);
+		}else{
+			say("Incorrect Password!");
+			return;
+		}
 	});
 	}
 	});
 }
 function signOut(){
 	loadData();
-	if(!validTime(getCurrentDate())){
-		say('You may not sign out at this time.');
-		return;
-	}
 	prom("Enter admin number:",function(admin){
 	var fname = getFirstName(admin);
 	if(fname){
