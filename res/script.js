@@ -110,7 +110,7 @@ window.onload = function(){
 	xmng = document.getElementById('mng');
 	xin.style.width = window.innerWidth/3 + 'px';
 	xin.height = window.innerHeight/10 + 'px';
-	setInterval(function(){if(!managing)usersSignedIn();},10000);
+	setInterval(function(){if(!managing)usersSignedIn();},1000);
 	setInterval(checkForUp,1000);
 	setHandlers();
 	loadData();
@@ -797,7 +797,7 @@ function getLast(f){
 function checkForUp(){
 	getLast(
 	function(t){
-		if(t.getTime() > lastLoad || !lastLoad){
+		if((t.getTime() > lastLoad) || !lastLoad){
 			loadData();
 			//alert("Loading data...");
 		};
