@@ -1,4 +1,5 @@
 users = [];
+lastLoad = 0;
 mode = 'server';
 managing = false;
 validTimes = [
@@ -109,7 +110,7 @@ window.onload = function(){
 	xmng = document.getElementById('mng');
 	xin.style.width = window.innerWidth/3 + 'px';
 	xin.height = window.innerHeight/10 + 'px';
-	setInterval(function(){loadData();if(!managing)usersSignedIn()},1000);
+	setInterval(function(){checkForUp();if(!managing)usersSignedIn()},1000);
 	setHandlers();
 	loadData();
 	hinput =  document.getElementById('hid');
@@ -265,24 +266,7 @@ function manage(){
 	var sty = ' style="text-align:center;background:orange;border:1px solid black;height:'+window.innerHeight/20+'px;width:'+window.innerWidth/3+'px;"';
 	document.getElementById("manage").innerHTML = "<h1> Data Management </h1><table id='manageT'><tr><td onclick='meritList()'"+sty+'>Get merit sheet</td><td onclick="userStats()"'+sty+'>View user stats</td><td onclick="userEdit()"'+sty+">Manage users</td></tr><tr></tr><td onclick='backup()'"+sty+">Backup Data</td><td onclick='restore()'"+sty+">Restore Data</td><td onclick='wipe()'"+sty+">Wipe Data</td></table><div id='output'></div>";
 	managing = true;
-	var lateList = '<h1>Late Sign out times</h1><table><tr><td>Admin Number</td><td>First Name</td><td>Second Name</td><td>Time(Month/Day, Time)</td></tr>';
-	var lateAr = [];
-	for(var i =0;i<users.length;i++){
-		if(!users[i].lateout)continue;
-		for(var j = 0;j < users[i].lateout.length;j++)lateAr.push([users[i].admin,users[i].firstName,users[i].secondName,users[i].lateout[j]]);
-	}
-	lateAr.sort(function(a,b){
-		bd = new Date(b[3]);
-		ad = new Date(a[3]);
-		return bd.getTime() - ad.getTime();
-	});
-	for(el = 0;el<lateAr.length;el++){
-		dat = new Date(lateAr[el][3]);
-		dat = ''+dat.getMonth()+'/' + dat.getDay()+ ', '+ dat.getHours() + ' : ' + dat.getMinutes();
-		lateList += '<tr><td>'+lateAr[el][0]+'</td><td>'+lateAr[el][1]+'</td><td>'+lateAr[el][2]+'</td><td>'+dat +'</td></tr>'
-	};
-	lateList += "</table>";
-	document.getElementById('output').innerHTML = lateList;
+	
 	var approvals = "<h1>Awaiting approval</h1><table><tr><td>Admin No</td><td>First Name</td><td>Second Name</td><td>Time Signed in</td><td>Reason</td><td class='approve'>Approve</td><td>Disapprove</td></tr>";
 	//loop here
 	appArray = [];
@@ -301,10 +285,7 @@ function manage(){
 		approvals += "<tr><td>"+ appArray[i][0]+"</td><td>"+appArray[i][1]+"</td><td>"+appArray[i][2]+"</td><td>"+appArray[i][3]+"</td><td>"+appArray[i][4]+"</td><td style='color:green;' onclick='"+func+"'>X</td><td style='color:white;' onclick='"+delfunc+"'>X</td></tr>";
 	}
 	approvals += '</table>';
-	document.getElementById('output').innerHTML += approvals;
-	say("You may view and edit merits and monitor data from here.");});});
-}
-function refreshApprove(){
+	document.getElementById('output').innerHTML = approvals;
 	var lateList = '<h1>Late Sign out times</h1><table><tr><td>Admin Number</td><td>First Name</td><td>Second Name</td><td>Time(Month/Day, Time)</td></tr>';
 	var lateAr = [];
 	for(var i =0;i<users.length;i++){
@@ -322,8 +303,11 @@ function refreshApprove(){
 		lateList += '<tr><td>'+lateAr[el][0]+'</td><td>'+lateAr[el][1]+'</td><td>'+lateAr[el][2]+'</td><td>'+dat +'</td></tr>'
 	};
 	lateList += "</table>";
-	document.getElementById('output').innerHTML = lateList;
-	var approvals = "<h1>Awaiting approval</h1><table><tr><td>Admin No</td><td>First Name</td><td>Second Name</td><td>Time Signed in</td><td>Reason</td><td class='approve'>Approve</td></tr>";
+	document.getElementById('output').innerHTML += lateList;
+	say("You may view and edit merits and monitor data from here.");});});
+}
+function refreshApprove(){
+	var approvals = "<h1>Awaiting approval</h1><table><tr><td>Admin No</td><td>First Name</td><td>Second Name</td><td>Time Signed in</td><td>Reason</td><td class='approve'>Approve</td><td>Disapprove</td></tr>";
 	//loop here
 	appArray = [];
 	for(var i = 0;i < users.length;i++)for(var j = 0;j<users[i].logs.length;j+=2)if(!users[i].logs[j][2])appArray.push([users[i].admin,users[i].firstName,users[i].secondName,users[i].logs[j][1],users[i].logs[j][3],j]);
@@ -341,7 +325,25 @@ function refreshApprove(){
 		approvals += "<tr><td>"+ appArray[i][0]+"</td><td>"+appArray[i][1]+"</td><td>"+appArray[i][2]+"</td><td>"+appArray[i][3]+"</td><td>"+appArray[i][4]+"</td><td style='color:green;' onclick='"+func+"'>X</td><td style='color:white;' onclick='"+delfunc+"'>X</td></tr>";
 	}
 	approvals += '</table>';
-	document.getElementById('output').innerHTML += approvals;
+	document.getElementById('output').innerHTML = approvals;
+	var lateList = '<h1>Late Sign out times</h1><table><tr><td>Admin Number</td><td>First Name</td><td>Second Name</td><td>Time(Month/Day, Time)</td></tr>';
+	var lateAr = [];
+	for(var i =0;i<users.length;i++){
+		if(!users[i].lateout)continue;
+		for(var j = 0;j < users[i].lateout.length;j++)lateAr.push([users[i].admin,users[i].firstName,users[i].secondName,users[i].lateout[j]]);
+	}
+	lateAr.sort(function(a,b){
+		bd = new Date(b[3]);
+		ad = new Date(a[3]);
+		return bd.getTime() - ad.getTime();
+	});
+	for(el = 0;el<lateAr.length;el++){
+		dat = new Date(lateAr[el][3]);
+		dat = ''+dat.getMonth()+'/' + dat.getDay()+ ', '+ dat.getHours() + ' : ' + dat.getMinutes();
+		lateList += '<tr><td>'+lateAr[el][0]+'</td><td>'+lateAr[el][1]+'</td><td>'+lateAr[el][2]+'</td><td>'+dat +'</td></tr>'
+	};
+	lateList += "</table>";
+	document.getElementById('output').innerHTML += lateList;
 }
 function meritList(){
 	var csv = "";
@@ -712,6 +714,7 @@ function loadData(){
 	xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
      users = JSON.parse(this.responseText);
+	 lastLoad = getCurrentDate();
 	 if(!users || users.length == 0)users = [testUser];
     }
   };
@@ -734,8 +737,12 @@ function saveData(){
 	var xhttp = new XMLHttpRequest();
 	xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
-		var x = 3;
+		saveLast();
     }
+	else{
+		//alert("An error occured. Click ok to try again");
+		//saveData();
+	}
   };
 	xhttp.open("POST", "store.php?q="+JSON.stringify(users), false);
 	xhttp.send();
@@ -758,3 +765,41 @@ function saveData(){
         link.setAttribute('download', filename);
         link.click();
     }
+function saveLast(){
+	if(mode == 'client'){
+		return;
+		//localStorage.SIusers = JSON.stringify(users);
+		return;
+	}
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+		//
+    }
+  };
+	xhttp.open("POST", "uplast.php?q="+JSON.stringify(getCurrentDate()), false);
+	xhttp.send();
+	return;
+}
+function getLast(f){
+	if(mode == 'server'){
+	var xhttp = new XMLHttpRequest();
+	xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+     f(new Date(JSON.parse(this.responseText)));
+    }
+  };
+  xhttp.open("GET", "last.txt", false);
+  xhttp.send();
+	}
+}
+function checkForUp(){
+	getLast(
+	function(t){
+		if(t.getTime() > lastLoad || !lastLoad){
+			loadData();
+			//alert("Loading data...");
+		};
+	}
+	);
+}
