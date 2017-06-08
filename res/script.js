@@ -110,7 +110,8 @@ window.onload = function(){
 	xmng = document.getElementById('mng');
 	xin.style.width = window.innerWidth/3 + 'px';
 	xin.height = window.innerHeight/10 + 'px';
-	setInterval(function(){checkForUp();if(!managing)usersSignedIn()},1000);
+	setInterval(function(){if(!managing)usersSignedIn();},10000);
+	setInterval(checkForUp,1000);
 	setHandlers();
 	loadData();
 	hinput =  document.getElementById('hid');
@@ -421,7 +422,7 @@ function wipe(){
 	say("Data wipe complete!");
 }
 function usersSignedIn(){
-	loadData();
+	if(mode == "client")loadData();
 	var elt = '<h1>Currently on Duty</h1><br><table><tr><td>Admin Number</td><td>First Name</td><td>Second Name</td><td>Time since sign in(minutes)</td></tr>';
 	for(var i = 0; i < users.length;i++){
 		if(hasSignedOut(users[i].admin))continue;
