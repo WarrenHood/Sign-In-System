@@ -1,5 +1,5 @@
 users = [];
-mode = 'client';
+mode = 'server';
 managing = false;
 validTimes = [
 	{day:1,
@@ -109,7 +109,7 @@ window.onload = function(){
 	xmng = document.getElementById('mng');
 	xin.style.width = window.innerWidth/3 + 'px';
 	xin.height = window.innerHeight/10 + 'px';
-	setInterval(function(){if(!managing)usersSignedIn()},1000);
+	setInterval(function(){loadData();if(!managing)usersSignedIn()},1000);
 	setHandlers();
 	loadData();
 	hinput =  document.getElementById('hid');
