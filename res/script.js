@@ -1,4 +1,5 @@
 users = [];
+//alert("test");
 lastLoad = 0;
 mode = 'server';
 managing = false;
@@ -496,7 +497,7 @@ function update(){
 function signIn(){
 	var approved = true;
 	var reason = '';
-	loadData();
+	//loadData();
 	prom("Enter admin number:",function(admin){
 	var fname = getFirstName(admin);
 	var index = -1;
@@ -574,7 +575,7 @@ function signIn(){
 	});
 }
 function signOut(){
-	loadData();
+	//loadData();
 	prom("Enter admin number:",function(admin){
 	var fname = getFirstName(admin);
 	if(fname){
@@ -715,6 +716,7 @@ function loadData(){
 	xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
      users = JSON.parse(this.responseText);
+	 //alert("Loaded");
 	 lastLoad = getCurrentDate();
 	 if(!users || users.length == 0)users = [testUser];
     }
@@ -739,6 +741,7 @@ function saveData(){
 	xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
 		saveLast();
+		//alert("saved");
     }
 	else{
 		//alert("An error occured. Click ok to try again");
